@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Suchet's Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { etharadark: '#0a0a0f', etharapink: '#e600a0', },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0f; }
+        .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0a0a0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex flex-col">
+
+    <header class="w-full py-4 px-8 border-b border-gray-800 flex justify-between items-center bg-black/40 sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="w-8 h-8 bg-etharapink rounded flex items-center justify-center shadow-[0_0_15px_rgba(230,0,160,0.3)]">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-tight">SUCHET <span class="text-etharapink">/</span> OPS</h1>
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] leading-none">Intelligence Interface</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <div class="text-right hidden sm:block">
+                <p id="userBadge" class="text-[10px] font-bold text-etharapink uppercase tracking-widest"></p>
+                <p class="text-[10px] text-gray-500 uppercase">System Status: Active</p>
+            </div>
+            <button onclick="logout()" class="px-4 py-2 border border-gray-700 rounded text-xs hover:bg-white hover:text-black transition-all duration-300 uppercase tracking-widest">Terminate</button>
+        </div>
+    </header>
+
+    <main class="p-6 lg:p-10">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="glass-card p-6 rounded-lg border-b border-gray-800">
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Total Directives</p>
+                <h2 id="totalTasks" class="text-3xl font-bold text-white tracking-tighter">0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-lg border-b border-etharapink/30 shadow-[inset_0_0_20px_rgba(230,0,160,0.05)]">
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Active Operations</p>
+                <h2 id="activeTasks" class="text-3xl font-bold text-white tracking-tighter">0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-lg border-b border-red-500/30 shadow-[inset_0_0_20px_rgba(239,68,68,0.05)]">
+                <p class="text-[10px] text-red-500 uppercase tracking-[0.2em] mb-1">Overdue Tasks</p>
+                <h2 id="overdueTasks" class="text-3xl font-bold text-red-500 tracking-tighter">0</h2>
+            </div>
+            <div class="glass-card p-6 rounded-lg border-b border-green-500/30">
+                <p class="text-[10px] text-gray-500 uppercase tracking-[0.2em] mb-1">Completed Units</p>
+                <h2 id="completedTasks" class="text-3xl font-bold text-green-500 tracking-tighter">0</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div id="adminPanel" class="hidden lg:col-span-4 space-y-6">
+                <h2 class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Administrative Tools</h2>
+                
+                <div class="glass-card p-6 rounded-lg shadow-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 bg-etharapink rounded-full"></span> Initialize Project
+                    </h3>
+                    <form id="projectForm" class="space-y-4">
+                        <input type="text" id="projName" placeholder="Project Identifier" required class="w-full bg-black/60 border border-gray-800 rounded px-3 py-2.5 text-xs focus:border-etharapink outline-none transition-all">
+                        <textarea id="projDesc" placeholder="Deployment Parameters (Description)" required class="w-full bg-black/60 border border-gray-800 rounded px-3 py-2.5 text-xs focus:border-etharapink outline-none transition-all h-20"></textarea>
+                        <button type="submit" class="w-full bg-white text-black font-bold py-2.5 rounded text-[10px] uppercase tracking-[0.2em] hover:bg-etharapink hover:text-white transition-all">Execute Initialization</button>
+                    </form>
+                </div>
+
+                <div class="glass-card p-6 rounded-lg shadow-2xl">
+                    <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 bg-etharapink rounded-full"></span> Task Deployment
+                    </h3>
+                    <form id="taskForm" class="space-y-4">
+                        <input type="text" id="taskTitle" placeholder="Task Objective" required class="w-full bg-black/60 border border-gray-800 rounded px-3 py-2.5 text-xs focus:border-etharapink outline-none transition-all">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input type="number" id="projId" placeholder="Project ID" required class="w-full bg-black/60 border border-gray-800 rounded px-3 py-2.5 text-xs focus:border-etharapink outline-none">
+                            <input type="number" id="assigneeId" placeholder="Operator ID" required class="w-full bg-black/60 border border-gray-800 rounded px-3 py-2.5 text-xs focus:border-etharapink outline-none">
+                        </div>
+                        <div class="flex items-center gap-2 bg-black/60 border border-gray-800 rounded px-3 py-2.5">
+                            <label class="text-[10px] text-gray-500 uppercase">Deadline:</label>
+                            <input type="date" id="dueDate" required class="w-full bg-transparent text-xs text-white focus:outline-none [color-scheme:dark]">
+                        </div>
+                        <button type="submit" class="w-full bg-transparent border border-etharapink text-etharapink font-bold py-2.5 rounded text-[10px] uppercase tracking-[0.2em] hover:bg-etharapink hover:text-white transition-all">Deploy Directive</button>
+                    </form>
+                </div>
+
+                <div class="glass-card p-6 rounded-lg shadow-2xl border-t border-gray-800">
+                    <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> Operator Directory
+                    </h3>
+                    <div class="max-h-40 overflow-y-auto pr-2">
+                        <table class="w-full text-left text-[10px] text-gray-400">
+                            <thead class="uppercase tracking-widest border-b border-gray-800">
+                                <tr>
+                                    <th class="pb-2">ID</th>
+                                    <th class="pb-2">Name</th>
+                                    <th class="pb-2">Role</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersList" class="divide-y divide-gray-800/50">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 space-y-6">
+                <h2 class="text-xs font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Assignment Feed</h2>
+                <div class="glass-card p-8 rounded-lg min-h-[600px] relative overflow-hidden">
+                    <div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 30px 30px;"></div>
+                    <div id="tasksContainer" class="space-y-4 relative z-10">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+        const token = localStorage.getItem('ethara_token');
+        const role = localStorage.getItem('ethara_role');
+
+        if (!token) { window.location.href = 'index.html'; }
+
+        document.getElementById('userBadge').innerText = `ACCESS: ${role}`;
+        
+        if (role === 'Admin') {
+            document.getElementById('adminPanel').classList.remove('hidden');
+            fetchUsers();
+        }
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const users = await res.json();
+                    const tbody = document.getElementById('usersList');
+                    tbody.innerHTML = '';
+                    users.forEach(u => {
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-white/5 transition-colors">
+                                <td class="py-2 text-white font-bold">#${u.id}</td>
+                                <td class="py-2">${u.name}</td>
+                                <td class="py-2"><span class="${u.role === 'Admin' ? 'text-etharapink' : 'text-blue-400'}">${u.role}</span></td>
+                            </tr>
+                        `;
+                    });
+                }
+            } catch (err) {}
+        }
+
+        async function fetchTasks() {
+            try {
+                const res = await fetch(`${API_URL}/tasks/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const tasks = await res.json();
+                
+                let overdueCount = 0;
+                const today = new Date();
+                today.setHours(0,0,0,0); // Remove time for accurate date comparison
+
+                const container = document.getElementById('tasksContainer');
+                container.innerHTML = '';
+
+                if(tasks.length === 0) {
+                    container.innerHTML = `<div class="text-center py-20 border border-dashed border-gray-800 rounded-lg"><p class="text-[10px] text-gray-500 uppercase tracking-widest">No Active Directives Found</p></div>`;
+                }
+
+                tasks.forEach(task => {
+                    let isOverdue = false;
+                    let dateDisplay = '';
+                    
+                    if(task.due_date && task.status !== 'Done') {
+                        const dueDate = new Date(task.due_date);
+                        if (dueDate < today) {
+                            isOverdue = true;
+                            overdueCount++;
+                        }
+                    }
+
+                    if(task.due_date) {
+                        dateDisplay = `<p class="text-[10px] mt-1 uppercase ${isOverdue ? 'text-red-500 font-bold animate-pulse' : 'text-gray-500'}">
+                            Deadline: ${task.due_date} ${isOverdue ? ' [OVERDUE]' : ''}
+                        </p>`;
+                    }
+
+                    let borderClass = isOverdue ? 'border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.2)]' : (task.status === 'Done' ? 'border-green-900/30' : (task.status === 'In Progress' ? 'border-yellow-900/30' : 'border-gray-800'));
+                    let statusTag = task.status === 'Done' ? 'bg-green-500/10 text-green-500' : (task.status === 'In Progress' ? 'bg-yellow-500/10 text-yellow-500' : 'bg-gray-500/10 text-gray-500');
+                    
+                    container.innerHTML += `
+                        <div class="bg-black/30 border ${borderClass} p-5 rounded-lg flex justify-between items-center transition-all hover:bg-black/50 group">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-tighter mb-1">Project ${task.project_id} / Task ${task.id} ${role === 'Admin' ? `/ To: User #${task.assigned_to}` : ''}</p>
+                                <h3 class="text-sm font-bold text-white group-hover:text-etharapink transition-colors">${task.title}</h3>
+                                ${dateDisplay}
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="text-[9px] uppercase font-bold px-2 py-1 rounded ${statusTag}">${task.status}</span>
+                                <select onchange="updateStatus(${task.id}, this.value)" class="bg-black border border-gray-700 text-[10px] rounded px-2 py-1.5 outline-none focus:border-etharapink cursor-pointer hover:border-gray-500 transition-all uppercase">
+                                    <option value="Todo" ${task.status === 'Todo' ? 'selected' : ''}>Initialize</option>
+                                    <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>Processing</option>
+                                    <option value="Done" ${task.status === 'Done' ? 'selected' : ''}>Complete</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Update Stats
+                document.getElementById('totalTasks').innerText = tasks.length;
+                document.getElementById('activeTasks').innerText = tasks.filter(t => t.status !== 'Done').length;
+                document.getElementById('completedTasks').innerText = tasks.filter(t => t.status === 'Done').length;
+                document.getElementById('overdueTasks').innerText = overdueCount;
+
+            } catch (err) {}
+        }
+
+        async function updateStatus(taskId, newStatus) {
+            await fetch(`${API_URL}/tasks/${taskId}/status`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            fetchTasks();
+        }
+
+        document.getElementById('projectForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch(`${API_URL}/projects`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: document.getElementById('projName').value, description: document.getElementById('projDesc').value })
+            });
+            if(res.ok) { alert("SYSTEM: Project Initialized"); e.target.reset(); fetchTasks(); }
+        });
+
+        document.getElementById('taskForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const res = await fetch(`${API_URL}/tasks`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    title: document.getElementById('taskTitle').value, 
+                    project_id: parseInt(document.getElementById('projId').value), 
+                    assigned_to: parseInt(document.getElementById('assigneeId').value),
+                    due_date: document.getElementById('dueDate').value // NAYA DATA
+                })
+            });
+            if(res.ok) { alert("SYSTEM: Directive Deployed"); e.target.reset(); fetchTasks(); }
+        });
+
+        function logout() { localStorage.clear(); window.location.href = 'index.html'; }
+        fetchTasks();
+    </script>
+</body>
+</html>

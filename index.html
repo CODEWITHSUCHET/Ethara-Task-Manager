@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suchet's Task Manager | Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { etharadark: '#0a0a0f', etharapink: '#e600a0' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0f; }
+        .glass-panel { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="bg-etharadark text-gray-200 min-h-screen flex items-center justify-center p-4">
+
+    <div class="glass-panel p-8 rounded-2xl w-full max-w-md relative z-10 shadow-2xl">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-white tracking-wider flex items-center justify-center gap-2 mb-2">
+                <svg class="w-8 h-8 text-etharapink" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                Suchet's Task Manager
+            </h1>
+            <p id="formTitle" class="text-[10px] text-gray-400 tracking-[0.3em] uppercase">Initialize Session</p>
+        </div>
+
+        <form id="authForm" class="space-y-4">
+            <div id="nameField" class="hidden">
+                <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Operator Name</label>
+                <input type="text" id="name" class="w-full bg-black/40 border border-gray-800 rounded px-4 py-3 text-sm focus:border-etharapink outline-none" placeholder="Enter Full Name">
+            </div>
+
+            <div>
+                <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Email</label>
+                <input type="email" id="email" required class="w-full bg-black/40 border border-gray-800 rounded px-4 py-3 text-sm focus:border-etharapink outline-none" placeholder="admin@suchet.com">
+            </div>
+            
+            <div class="relative">
+                <label id="passLabel" class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Password</label>
+                <input type="password" id="password" required class="w-full bg-black/40 border border-gray-800 rounded px-4 py-3 text-sm focus:border-etharapink outline-none" placeholder="••••••••">
+                <button type="button" onclick="togglePass('password', 'eyeIcon1')" class="absolute right-3 top-[34px] text-gray-500 hover:text-white">
+                    <i id="eyeIcon1" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div id="confirmPassField" class="hidden relative">
+                <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-1.5">Verify Password</label>
+                <input type="password" id="confirmPassword" class="w-full bg-black/40 border border-gray-800 rounded px-4 py-3 text-sm focus:border-etharapink outline-none" placeholder="••••••••">
+                <button type="button" onclick="togglePass('confirmPassword', 'eyeIcon2')" class="absolute right-3 top-[34px] text-gray-500 hover:text-white">
+                    <i id="eyeIcon2" data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div id="error-box" class="hidden bg-red-500/10 border border-red-500/50 p-3 rounded text-center">
+                <p id="error-msg" class="text-red-500 text-[10px] uppercase tracking-widest font-bold"></p>
+            </div>
+
+            <button type="submit" id="submitBtn" class="w-full bg-etharapink text-white font-bold py-3 rounded text-[11px] uppercase tracking-[0.2em] shadow-lg transition-all active:scale-95">
+                Login
+            </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t border-gray-900 text-center">
+            <p id="toggleText" class="text-[10px] text-gray-500 uppercase tracking-widest cursor-pointer hover:text-white">
+                No Account? <span class="text-etharapink font-bold">Register New Agent</span>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const API_URL = 'http://127.0.0.1:8000';
+        let isLogin = true;
+
+        function togglePass(inputId, iconId) {
+            const passInput = document.getElementById(inputId);
+            const eyeIcon = document.getElementById(iconId);
+            passInput.type = passInput.type === 'password' ? 'text' : 'password';
+            eyeIcon.setAttribute('data-lucide', passInput.type === 'password' ? 'eye' : 'eye-off');
+            lucide.createIcons();
+        }
+
+        const authForm = document.getElementById('authForm');
+        const toggleText = document.getElementById('toggleText');
+        const nameField = document.getElementById('nameField');
+        const confirmPassField = document.getElementById('confirmPassField');
+        const passLabel = document.getElementById('passLabel');
+        const formTitle = document.getElementById('formTitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorBox = document.getElementById('error-box');
+        const errorMsg = document.getElementById('error-msg');
+
+        toggleText.addEventListener('click', () => {
+            isLogin = !isLogin;
+            nameField.classList.toggle('hidden');
+            confirmPassField.classList.toggle('hidden');
+            formTitle.innerText = isLogin ? 'Initialize Session' : 'Register Agent Identity';
+            passLabel.innerText = isLogin ? 'Password' : 'Create Your Password';
+            submitBtn.innerText = isLogin ? 'Login' : 'Create Account';
+            toggleText.innerHTML = isLogin ? 'No Account? <span class="text-etharapink font-bold">Register New Agent</span>' : 'Have Credentials? <span class="text-etharapink font-bold">Return to Login</span>';
+            errorBox.classList.add('hidden');
+        });
+
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.classList.add('hidden');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const name = document.getElementById('name').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!isLogin && password !== confirmPassword) {
+                errorMsg.innerText = "Passwords do not match!";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            // Responsive Button Logic
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Processing...";
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70');
+
+            try {
+                let response;
+                if (isLogin) {
+                    // JSON formatting fix
+                    response = await fetch(`${API_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email, password: password })
+                    });
+                } else {
+                    response = await fetch(`${API_URL}/signup`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name: name, email: email, password: password, role: "Member" })
+                    });
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (isLogin) {
+                        localStorage.setItem('ethara_token', data.access_token);
+                        const payload = JSON.parse(atob(data.access_token.split('.')[1]));
+                        localStorage.setItem('ethara_role', payload.role);
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        alert("Account Registered! Please Login.");
+                        window.location.reload();
+                    }
+                } else {
+                    let errorText = "Authentication Failed";
+                    if (data.detail) {
+                        errorText = typeof data.detail === 'string' ? data.detail : "Invalid data format.";
+                    }
+                    errorMsg.innerText = errorText;
+                    errorBox.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorMsg.innerText = "Backend Server Offline";
+                errorBox.classList.remove('hidden');
+            } finally {
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70');
+            }
+        });
+    </script>
+</body>
+</html>
