@@ -4,16 +4,16 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 import database, models, schemas, utils
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, FileResponse
+import os
 
 # DB tables create karne ki command
 database.Base.metadata.create_all(bind=database.engine)
 
-# Yeh line login se token extract karne mein madad karegi
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 app = FastAPI(title="Ethara AI - Task Manager API")
 
-# Frontend ko backend se connect karne ke liye CORS zaroori hai
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -22,7 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Dependency: Current User nikalne ka function
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -42,9 +41,29 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     return user
 
-@app.get("/")
+# --- NAYA: FRONTEND FILES SERVE KARNE KA LOGIC ---
+@app.get("/", response_class=HTMLResponse)
 def read_root():
-    return {"message": "Ethara AI Task Manager is Live!"}
+    # Jab koi seedha URL kholega, index.html dikhao
+    file_path = os.path.join(os.path.dirname(__file__), "index.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return {"message": "Ethara AI Task Manager is Live! (Frontend missing)"}
+
+@app.get("/index.html", response_class=HTMLResponse)
+def get_index():
+    file_path = os.path.join(os.path.dirname(__file__), "index.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="File not found")
+
+@app.get("/dashboard.html", response_class=HTMLResponse)
+def get_dashboard():
+    file_path = os.path.join(os.path.dirname(__file__), "dashboard.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    raise HTTPException(status_code=404, detail="File not found")
+# ------------------------------------------------
 
 # 1. SIGNUP API
 @app.post("/signup", response_model=schemas.UserResponse)
@@ -99,11 +118,8 @@ def create_task(task: schemas.TaskCreate, db: Session = Depends(database.get_db)
 # 6. GET TASKS (Admin sees all, Member sees own)
 @app.get("/tasks/me", response_model=list[schemas.TaskResponse])
 def my_tasks(db: Session = Depends(database.get_db), user: models.User = Depends(get_current_user)):
-    # BUG FIX: Agar user Admin hai, toh use poore system ke saare tasks dikhao
     if user.role == models.RoleEnum.Admin:
         return db.query(models.Task).all()
-    
-    # Agar Member hai, toh sirf uske khud ke tasks dikhao
     return db.query(models.Task).filter(models.Task.assigned_to == user.id).all()
 
 # 7. UPDATE TASK STATUS
@@ -113,7 +129,6 @@ def update_status(task_id: int, status_update: schemas.TaskStatusUpdate, db: Ses
     if not task: 
         raise HTTPException(status_code=404, detail="Task not found")
     
-    # Security Rule: Admin koi bhi task update kar sakta hai, Member sirf apna
     if user.role != models.RoleEnum.Admin and task.assigned_to != user.id:
         raise HTTPException(status_code=403, detail="Not authorized to update this task")
     
